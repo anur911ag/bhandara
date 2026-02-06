@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from urllib.parse import quote_plus
 
+import certifi
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 
@@ -47,9 +48,9 @@ db = None
 
 async def connect_db():
     global client, db
-    client = AsyncIOMotorClient(MONGO_URI)
+    client = AsyncIOMotorClient(MONGO_URI, tlsCAFile=certifi.where())
     db = client[DB_NAME]
-    # Create index on location for geo queries and on is_active for filtering
+    # Create indexes
     await db.camps.create_index("is_active")
     await db.camps.create_index("id", unique=True)
 
