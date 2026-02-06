@@ -1,0 +1,16 @@
+{
+  "name": "Bhandara - Free Food Camps",
+  "short_name": "Bhandara",
+  "description": "Find free food camps and bhandaras near you",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f0e8",
+  "theme_color": "#1b4332",
+  "icons": [
+    {
+      "src": "/icon-192.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    }
+  ]
+}
