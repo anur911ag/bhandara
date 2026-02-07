@@ -369,7 +369,7 @@ export default function AddCampPage() {
               value={form.date}
               onChange={handleChange}
               min={today}
-              className="w-full px-4 py-3 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              className="w-full px-4 py-3 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 appearance-none h-[46px]"
             />
           </div>
         )}
@@ -385,7 +385,7 @@ export default function AddCampPage() {
               name="start_time"
               value={form.start_time}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              className="w-full px-4 py-3 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 appearance-none h-[46px]"
             />
           </div>
           <div>
@@ -395,7 +395,7 @@ export default function AddCampPage() {
               name="end_time"
               value={form.end_time}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              className="w-full px-4 py-3 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 appearance-none h-[46px]"
             />
           </div>
         </div>
