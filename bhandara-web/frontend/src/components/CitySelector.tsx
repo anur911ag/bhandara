@@ -8,6 +8,9 @@ interface CitySelectorProps {
   selected: CityOption | null;
   onSelect: (city: CityOption | null) => void;
   onClear: () => void;
+  onUseCurrentLocation?: () => void;
+  gpsLoading?: boolean;
+  resolvingName?: boolean;
 }
 
 function extractPlaceName(displayName: string): string {
@@ -15,7 +18,7 @@ function extractPlaceName(displayName: string): string {
   return parts[0] || displayName;
 }
 
-export default function CitySelector({ selected, onSelect, onClear }: CitySelectorProps) {
+export default function CitySelector({ selected, onSelect, onClear, onUseCurrentLocation, gpsLoading, resolvingName }: CitySelectorProps) {
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
@@ -111,6 +114,43 @@ export default function CitySelector({ selected, onSelect, onClear }: CitySelect
             Change
           </button>
         </div>
+      )}
+
+      {/* Use current location button (shown in change/edit mode) */}
+      {selected && focused && onUseCurrentLocation && (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              onUseCurrentLocation();
+              setFocused(false);
+            }}
+            disabled={gpsLoading}
+            className="w-full flex items-center justify-center gap-2.5 py-3 bg-white border border-border rounded-xl text-sm font-medium text-foreground hover:border-emerald-400 hover:shadow-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {gpsLoading ? (
+              <>
+                <span className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                <span className="text-muted">{resolvingName ? "Resolving location..." : "Getting your location..."}</span>
+              </>
+            ) : (
+              <>
+                <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <svg className="w-3.5 h-3.5 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                  </svg>
+                </div>
+                Use my current location
+              </>
+            )}
+          </button>
+          <div className="flex items-center gap-3 my-2">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted">or search a city</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+        </>
       )}
 
       {/* Search input (shown when no selection or when editing) */}
