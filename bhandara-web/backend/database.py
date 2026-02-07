@@ -48,8 +48,16 @@ db = None
 
 async def connect_db():
     global client, db
-    client = AsyncIOMotorClient(MONGO_URI, tlsCAFile=certifi.where())
+    client = AsyncIOMotorClient(
+        MONGO_URI,
+        tls=True,
+        tlsCAFile=certifi.where(),
+        tlsAllowInvalidCertificates=True,
+        serverSelectionTimeoutMS=10000,
+    )
     db = client[DB_NAME]
+    # Verify connection works
+    await client.admin.command("ping")
     # Create indexes
     await db.camps.create_index("is_active")
     await db.camps.create_index("id", unique=True)
@@ -137,6 +145,14 @@ async def add_camp(camp: dict) -> dict:
     return _clean_doc(camp)
 
 
+def _matches_city(camp: dict, city: str) -> bool:
+    """Check if a camp's address contains the city text (case-insensitive)."""
+    import re
+
+    address = camp.get("address", "")
+    return bool(re.search(city, address, re.IGNORECASE))
+
+
 async def query_camps(
     lat: float | None = None,
     lng: float | None = None,
@@ -146,12 +162,12 @@ async def query_camps(
     limit: int = 20,
 ) -> tuple[list[dict], int]:
     now = datetime.now(timezone.utc)
+    has_geo = lat is not None and lng is not None
+    has_city = bool(city and city.strip())
+    city_clean = city.strip() if has_city else ""
 
-    # Build MongoDB query filter
+    # Fetch all active camps — filtering is done in Python with OR logic
     query_filter: dict = {"is_active": {"$ne": False}}
-    if city and city.strip():
-        query_filter["address"] = {"$regex": city.strip(), "$options": "i"}
-
     cursor = _collection().find(query_filter, {"_id": 0})
     camps = await cursor.to_list(length=None)
 
@@ -164,15 +180,32 @@ async def query_camps(
         c["_status"] = status
         filtered.append(c)
 
-    # Geo filter
-    if lat is not None and lng is not None:
-        with_dist = []
+    # Apply city / geo filters with OR logic:
+    #   - Both provided → camp matches if within geo radius OR address contains city
+    #   - Only geo      → camp matches if within geo radius
+    #   - Only city     → camp matches if address contains city
+    if has_geo or has_city:
+        matched = []
         for c in filtered:
-            dist = haversine_km(lat, lng, c["latitude"], c["longitude"])
-            if dist <= radius_km:
-                c["_dist"] = dist
-                with_dist.append(c)
-        filtered = with_dist
+            geo_match = False
+            city_match = False
+
+            if has_geo:
+                dist = haversine_km(lat, lng, c["latitude"], c["longitude"])
+                if dist <= radius_km:
+                    geo_match = True
+                    c["_dist"] = dist
+
+            if has_city and _matches_city(c, city_clean):
+                city_match = True
+                # Compute distance for sorting even when matched only by city
+                if has_geo and "_dist" not in c:
+                    c["_dist"] = haversine_km(lat, lng, c["latitude"], c["longitude"])
+
+            if geo_match or city_match:
+                matched.append(c)
+
+        filtered = matched
 
     # Sort: active first, then upcoming; within each group by date+time+distance
     def sort_key(c: dict) -> tuple:
