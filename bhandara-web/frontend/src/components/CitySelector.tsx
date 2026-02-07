@@ -73,10 +73,9 @@ export default function CitySelector({ selected, onSelect, onClear }: CitySelect
   }
 
   function handleClear() {
-    setFocused(false);
+    onClear();
     setSearch("");
     setSuggestions([]);
-    onClear();
   }
 
   const showDropdown = focused && search.trim().length > 0;
