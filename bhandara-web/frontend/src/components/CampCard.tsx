@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Camp } from "@/lib/api";
+import { getCampStatus } from "@/lib/campStatus";
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr + "T00:00:00");
@@ -33,25 +34,6 @@ function getDistanceText(camp: Camp, userLat?: number, userLng?: number) {
   return dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)} km`;
 }
 
-function getCampStatus(camp: Camp): "active" | "upcoming" {
-  const now = new Date();
-  const nowTime = now.toTimeString().slice(0, 5);
-
-  if (camp.is_recurring) {
-    if (camp.end_time && nowTime > camp.end_time) return "upcoming";
-    if (nowTime >= camp.start_time) return "active";
-    return "upcoming";
-  }
-
-  const todayStr = now.toISOString().split("T")[0];
-  if (camp.date > todayStr) return "upcoming";
-  if (camp.date < todayStr) return "upcoming";
-
-  if (camp.end_time && nowTime > camp.end_time) return "upcoming";
-  if (nowTime >= camp.start_time) return "active";
-  return "upcoming";
-}
-
 interface CampCardProps {
   camp: Camp;
   userLat?: number;
@@ -62,6 +44,10 @@ export default function CampCard({ camp, userLat, userLng }: CampCardProps) {
   const distance = getDistanceText(camp, userLat, userLng);
   const status = getCampStatus(camp);
   const isActive = status === "active";
+
+  if (status === "expired") {
+    return null;
+  }
 
   return (
     <Link href={`/camp/${camp.id}`} className="block group">
